@@ -13,7 +13,7 @@ def reverseTransform(img):
 
 if __name__ == '__main__':
     device = device("cuda" if cuda.is_available() else "cpu")
-    model = load(".\\save\\epoch5.pt")
+    model = load(".\\save\\epoch50.pt")
     model.eval()
     dataset = VertebraDataset("..\\test\\image")
     loader = DataLoader(dataset, shuffle=False)
