@@ -24,7 +24,7 @@ class Unet(Module):
         self.double3r = Double_Conv2d(256, 128, padding=1)
         self.double4r = Double_Conv2d(128, 64, padding=1)
 
-        self.final = Conv2d(64, 1, kernel_size=1)
+        self.final = Conv2d(64, 2, kernel_size=1)
 
     def forward(self, x):
         l1 = self.double1l(x)
