@@ -31,7 +31,7 @@ class VertebraDataset(Dataset):
             img_path = path.join(self.dataset_path, self.images[idx])
             img = Image.open(img_path)
             img = self.Preprocess(img)
-            return self.transform(img)
+            return self.transform(img), self.images[idx]
 
     def __len__(self):
         return len(self.images)
