@@ -39,8 +39,8 @@ def eval(model, loader, device):
             img = img.to(device)
             output = model(img)
             output = (torch.sigmoid(output) > 0.5) * 255
-            output = output.cpu().numpy().astype(np.int)
-            mask = mask.numpy().astype(np.int) * 255
+            output = output.cpu().numpy().astype(np.uint8)
+            mask = mask.numpy().astype(np.uint8) * 255
             for dim in range(output.shape[0]):
                 score = dice_coef(output[dim][0], mask[dim][0])
                 scores.append(score)
@@ -68,6 +68,7 @@ def train(model, dataset, device, epochs, criterion, batch_size=1, test_factor=0
     fig_train_score = list()
     fig_test_score = list()
 
+    highest_epoch = 0
     highest_score = 0
     loss_mean = 0
 
@@ -83,7 +84,7 @@ def train(model, dataset, device, epochs, criterion, batch_size=1, test_factor=0
     for ep in range(epochs):
         print(f"[ Epoch {ep + 1}/{epochs} ]")
         timer = time.clock()
-        optimizer = Adam(model.parameters(), lr=1e-5 * (0.1 ** (ep // 5)))
+        optimizer = Adam(model.parameters(), lr=1e-4 * (0.1 ** (ep // 5)))
         loss_mean = run_one_epoch(model, trainloader, device, criterion, optimizer)
         train_score = eval(model, trainloader, device)
         test_score = eval(model, testloader, device)
@@ -94,20 +95,25 @@ def train(model, dataset, device, epochs, criterion, batch_size=1, test_factor=0
         fig_test_score.append(test_score)
         save_fig(fig_epoch, fig_loss, fig_train_score, fig_test_score, save_dir=save_dir)
 
+        if test_score > highest_score:
+            highest_score = test_score
+            highest_epoch = ep + 1
+            torch.save({"state_dict": model.state_dict(), "loss": loss_mean, "batchsize": batch_size, "Epoch": ep + 1}, path.join(save_dir, "best.pt"))
+
         print(f"""
+Best Score {highest_score} @ Epoch {highest_epoch}
 Loss: {loss_mean}
 Train Dice: {train_score}
 Test Dice: {test_score}
 Time passed: {time.clock() - timer} seconds.
 """)
-        if test_score > highest_score:
-            torch.save({"state_dict": model.state_dict(), "loss": loss_mean, "batchsize": batch_size}, path.join(save_dir, "best.pt"))
-    torch.save({"state_dict": model.state_dict(), "loss": loss_mean, "batchsize": batch_size}, path.join(save_dir, "last.pt"))
+
+    torch.save({"state_dict": model.state_dict(), "loss": loss_mean, "batchsize": batch_size, "Epoch": ep + 1}, path.join(save_dir, "last.pt"))
 
 
 if __name__ == '__main__':
-    EPOCH = 3
-    BATCHSIZE = 2
+    EPOCH = 5
+    BATCHSIZE = 8
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = VertebraDataset("..\\extend_dataset", train=True)
