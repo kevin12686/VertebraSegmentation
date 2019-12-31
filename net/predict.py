@@ -1,6 +1,6 @@
 from torch import load, device, cuda, no_grad, softmax
 from torch.utils.data import DataLoader
-from unet.data import VertebraDataset
+from net.data import VertebraDataset
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 

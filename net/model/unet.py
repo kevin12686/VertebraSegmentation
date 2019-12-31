@@ -4,9 +4,9 @@ from .components import Double_Conv2d, DeConv2D
 
 
 class Unet(Module):
-    def __init__(self):
+    def __init__(self, in_channels, out_channels):
         super().__init__()
-        self.double1l = Double_Conv2d(1, 64, padding=1)
+        self.double1l = Double_Conv2d(in_channels, 64, padding=1)
         self.double2l = Double_Conv2d(64, 128, padding=1)
         self.double3l = Double_Conv2d(128, 256, padding=1)
         self.double4l = Double_Conv2d(256, 512, padding=1)
@@ -24,7 +24,7 @@ class Unet(Module):
         self.double3r = Double_Conv2d(256, 128, padding=1)
         self.double4r = Double_Conv2d(128, 64, padding=1)
 
-        self.final = Conv2d(64, 2, kernel_size=1)
+        self.final = Conv2d(64, out_channels, kernel_size=1)
 
     def forward(self, x):
         l1 = self.double1l(x)
