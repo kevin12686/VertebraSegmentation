@@ -1,4 +1,5 @@
-from torch.nn import Module, Conv2d, UpsamplingBilinear2d
+from torch.nn.functional import interpolate
+from torch.nn import Module, Conv2d, ConvTranspose2d
 from torch import cat
 from .components import Residual_Unit, ResidualBlock
 
@@ -12,7 +13,9 @@ class ResUnet(Module):
         self.resblock3l = ResidualBlock(128, 256, f_stride=2, padding=1)
         self.resbridge = ResidualBlock(256, 512, f_stride=2, padding=1)
 
-        self.upsample = UpsamplingBilinear2d(scale_factor=2)
+        self.up3 = ConvTranspose2d(512, 256, kernel_size=3, stride=2)
+        self.up2 = ConvTranspose2d(256, 128, kernel_size=3, stride=2)
+        self.up1 = ConvTranspose2d(128, 64, kernel_size=3, stride=2)
 
         self.resblock3r = ResidualBlock(512, 256, padding=1)
         self.resblock2r = ResidualBlock(256, 128, padding=1)
@@ -33,13 +36,19 @@ class ResUnet(Module):
 
         x = self.resbridge(x)
 
-        x = cat([l3, self.upsample(x)])
+        x = self.up3(x)
+        x = interpolate(x[:, :, ], size=l3.shape[-2:])
+        x = cat([l3, x], dim=1)
         x = self.resblock3r(x)
 
-        x = cat([l2, self.upsample(x)])
+        x = self.up2(x)
+        x = interpolate(x[:, :, ], size=l2.shape[-2:])
+        x = cat([l2, x], dim=1)
         x = self.resblock2r(x)
 
-        x = cat([l1, self.upsample(x)])
+        x = self.up1(x)
+        x = interpolate(x[:, :, ], size=l1.shape[-2:])
+        x = cat([l1, x], dim=1)
         x = self.resblock1r(x)
 
         x = self.final(x)

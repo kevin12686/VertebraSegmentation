@@ -32,8 +32,8 @@ class ResidualBlock(Module):
         self.ru2 = Residual_Unit(in_channels=out_channels, out_channels=out_channels, padding=padding)
 
     def forward(self, x):
-        residual = x
         x = self.ru1(x)
+        residual = x
         x = self.ru2(x)
         x += residual
         return x

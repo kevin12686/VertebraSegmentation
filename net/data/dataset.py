@@ -1,7 +1,7 @@
-from torch import as_tensor, long
 from torch.utils.data import Dataset
+import torch
+import numpy as np
 from torchvision.transforms import Compose, ToTensor
-from numpy import array
 from PIL import Image, ImageOps, ImageFilter
 from os import listdir, path
 
@@ -24,9 +24,14 @@ class VertebraDataset(Dataset):
             img_path = path.join(self.dataset_path, self.image_folder, self.images[idx])
             img = Image.open(img_path)
             img = self.Preprocess(img)
+            img = self.transform(img)
             mask_path = path.join(self.dataset_path, self.mask_folder, self.masks[idx])
-            mask = ImageOps.grayscale(Image.open(mask_path))
-            return self.transform(img), as_tensor(array(mask)[:, 2:498] / 255, dtype=long)
+            mask = np.array(ImageOps.grayscale(Image.open(mask_path))) / 255
+            if img.shape != mask.shape:
+                zero = np.zeros_like(img)
+                zero[:, ] = mask
+                mask = zero
+            return img, torch.as_tensor(mask, dtype=torch.float)
         else:
             img_path = path.join(self.dataset_path, self.images[idx])
             img = Image.open(img_path)
@@ -44,3 +49,8 @@ class VertebraDataset(Dataset):
         img = ImageOps.autocontrast(img, 2)
         img = ImageOps.equalize(img)
         return img
+
+
+if __name__ == '__main__':
+    dataset = VertebraDataset("..\\..\\extend_dataset", train=True)
+    dataset[0]

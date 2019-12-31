@@ -1,5 +1,6 @@
+from torch.nn.functional import interpolate
 from torch.nn import Module, MaxPool2d, Conv2d
-from torch import cat
+import torch
 from .components import Double_Conv2d, DeConv2D
 
 
@@ -42,36 +43,24 @@ class Unet(Module):
         x = self.doubleb(x)
 
         x = self.up1(x)
-        l4 = self.crop(l4, x)
-        x = cat([l4, x], dim=1)
+        x = interpolate(x[:, :, ], l4[-2:])
+        x = torch.cat([l4, x], dim=1)
         x = self.double1r(x)
 
         x = self.up2(x)
-        l3 = self.crop(l3, x)
-        x = cat([l3, x], dim=1)
+        x = interpolate(x[:, :, ], l3[-2:])
+        x = torch.cat([l3, x], dim=1)
         x = self.double2r(x)
 
         x = self.up3(x)
-        l2 = self.crop(l2, x)
-        x = cat([l2, x], dim=1)
+        x = interpolate(x[:, :, ], l2[-2:])
+        x = torch.cat([l2, x], dim=1)
         x = self.double3r(x)
 
         x = self.up4(x)
-        l1 = self.crop(l1, x)
-        x = cat([l1, x], dim=1)
+        x = interpolate(x[:, :, ], l1[-2:])
+        x = torch.cat([l1, x], dim=1)
         x = self.double4r(x)
 
         x = self.final(x)
         return x
-
-    @classmethod
-    def crop(cls, target, ref):
-        if target.shape == ref.shape:
-            return target
-        lower1 = int((target.shape[2] - ref.shape[2]) / 2)
-        upper1 = int(target.shape[2] - lower1)
-        lower2 = int((target.shape[3] - ref.shape[3]) / 2)
-        upper2 = int(target.shape[3] - lower2)
-        diff1 = abs(upper1 - lower1 - ref.shape[2])
-        diff2 = abs(upper2 - lower2 - ref.shape[3])
-        return target[:, :, lower1 + diff1:upper1, lower2 + diff2:upper2]
