@@ -16,7 +16,7 @@ def predict(model, loader, save_path="..\\test\\predict"):
             output = (torch.sigmoid(output) > 0.5) * 255
             output = output.cpu().numpy().astype(np.uint8)
             for dim in range(output.shape[0]):
-                io.imsave(f"{filename[dim]}_predict.png", output[dim][0])
+                io.imsave(f"{save_path}\\predict_{filename[dim]}", output[dim][0])
 
 
 if __name__ == '__main__':
