@@ -88,8 +88,12 @@ def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, te
     model = model.to(device)
 
     for ep in range(epochs):
-        print(f"[ Epoch {ep + 1}/{epochs} ]")
         timer = time.clock()
+        for param_group in optimizer.param_groups:
+            if ep != 0 and ep % 40 == 0:
+                param_group['lr'] *= 0.1
+            learning_rate = param_group['lr']
+        print(f"[ Epoch {ep + 1}/{epochs} ]")
         loss_mean = run_one_epoch(model, trainloader, device, criterion, optimizer)
         train_score = eval(model, trainloader, device)
         test_score = eval(model, testloader, device)
@@ -109,6 +113,7 @@ def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, te
 
         print(f"""
 Best Score {highest_score} @ Epoch {highest_epoch}
+Learning Rate: {learning_rate}
 Loss: {loss_mean}
 Train Dice: {train_score}
 Test Dice: {test_score}
@@ -118,7 +123,7 @@ Time passed: {time.clock() - timer} seconds.
 
 if __name__ == '__main__':
     EPOCH = 200
-    BATCHSIZE = 1
+    BATCHSIZE = 8
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = VertebraDataset("..\\extend_dataset", train=True)
