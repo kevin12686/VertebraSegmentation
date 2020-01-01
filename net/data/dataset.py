@@ -1,9 +1,11 @@
 from torch.utils.data import Dataset
+from torchvision.transforms import Compose, ToTensor
+from skimage.filters import gaussian, sobel
+from skimage.color import rgb2gray
+from skimage import exposure, io
+from os import listdir, path
 import torch
 import numpy as np
-from torchvision.transforms import Compose, ToTensor
-from PIL import Image, ImageOps, ImageFilter
-from os import listdir, path
 
 
 class VertebraDataset(Dataset):
@@ -22,35 +24,38 @@ class VertebraDataset(Dataset):
     def __getitem__(self, idx):
         if self.train:
             img_path = path.join(self.dataset_path, self.image_folder, self.images[idx])
-            img = Image.open(img_path)
-            img = self.Preprocess(img)
-            img = self.transform(img)
+            img = io.imread(img_path)
+            img = self.preprocess(img)
+            out_img = np.zeros((1,) + img.shape, dtype=np.float)
+            out_img[:, ] = img
             mask_path = path.join(self.dataset_path, self.mask_folder, self.masks[idx])
-            mask = np.array(ImageOps.grayscale(Image.open(mask_path))) / 255
-            if img.shape != mask.shape:
-                zero = np.zeros_like(img)
-                zero[:, ] = mask
-                mask = zero
-            return img, torch.as_tensor(mask, dtype=torch.float)
+            mask = np.array(rgb2gray(io.imread(mask_path))) / 255
+            return torch.as_tensor(out_img, dtype=torch.float), torch.as_tensor(mask, dtype=torch.long)
         else:
             img_path = path.join(self.dataset_path, self.images[idx])
-            img = Image.open(img_path)
-            img = self.Preprocess(img)
-            return self.transform(img), self.images[idx]
+            img = io.imread(img_path)
+            img = self.preprocess(img)
+            out_img = np.zeros((1,) + img.shape, dtype=np.float)
+            out_img[:, ] = img
+            return torch.as_tensor(out_img, dtype=torch.float), self.images[idx]
 
     def __len__(self):
         return len(self.images)
 
     @classmethod
-    def Preprocess(cls, img):
-        img = ImageOps.grayscale(img)
-        img = img.filter(ImageFilter.GaussianBlur(2))
-        img = img.filter(ImageFilter.EDGE_ENHANCE_MORE)
-        img = ImageOps.autocontrast(img, 2)
-        img = ImageOps.equalize(img)
-        return img
+    def preprocess(cls, img):
+        img = rgb2gray(img)
+        bound = img.shape[0] // 3
+        up = exposure.equalize_adapthist(img[:bound, :])
+        down = exposure.equalize_adapthist(img[bound:, :])
+        enhance = np.append(up, down, axis=0)
+        edge = sobel(gaussian(enhance, 2))
+        enhance = enhance + edge * 3
+        return np.where(enhance > 1, 1, enhance)
 
 
 if __name__ == '__main__':
     dataset = VertebraDataset("..\\..\\extend_dataset", train=True)
-    dataset[0]
+    a, b = dataset[0]
+    print(a.shape)
+    print(b.shape)

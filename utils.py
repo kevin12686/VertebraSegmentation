@@ -26,7 +26,7 @@ def dice_coef(target, truth, t_val=255):
     return dice
 
 
-def dice_coef_each_region(target, truth, num_objs=16, width=3):
+def dice_coef_each_region(target, truth, num_objs=16, width=15):
     results = list()
     target = binary_dilation(binary_erosion(target, square(width)), square(width))
     target = label(target, connectivity=1)

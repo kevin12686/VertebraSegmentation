@@ -1,4 +1,4 @@
-from torch.nn import BCEWithLogitsLoss
+from torch.nn import Module, CrossEntropyLoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader, random_split
 import torch
@@ -10,13 +10,22 @@ import matplotlib.pyplot as plt
 import time
 
 
-def dice_coef(target, truth, t_val=1):
-    target_val = target == t_val
-    truth_val = truth == t_val
-    target_obj = torch.sum(target_val).to(torch.float)
-    truth_obj = torch.sum(truth_val).to(torch.float)
-    intersection = torch.sum(target_val & truth_val).to(torch.float)
-    dice = (2 * intersection) / (target_obj + truth_obj)
+class DiceCoefLoss(Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, target, truth):
+        output = torch.sigmoid(target)
+        return 1 - dice_coef(output, truth)
+
+
+def dice_coef(target, truth, smooth=1.0):
+    target = target.contiguous().view(-1)
+    truth = truth.contiguous().view(-1)
+    target_obj = (target * target).sum()
+    truth_obj = (truth * truth).sum()
+    intersection = torch.sum(target * truth)
+    dice = (2 * intersection) / (target_obj + truth_obj + smooth)
     return dice
 
 
@@ -45,13 +54,11 @@ def eval(model, loader, device):
     with torch.no_grad():
         for _, (img, mask) in tqdm(enumerate(loader), total=len(loader), desc="Evaluate"):
             img = img.to(device)
-            mask = mask.to(device).type(torch.uint8)
+            mask = mask.to(device)
             output = model(img)
-            output = (torch.sigmoid(output) > 0.5)
-            output = output.type(torch.uint8)
-            for dim in range(output.shape[0]):
-                score = dice_coef(output[dim][0], mask[dim][0])
-                scores.append(score)
+            output = torch.softmax(output, dim=1)
+            score = dice_coef(output[:, 1], mask)
+            scores.append(score)
     return torch.mean(torch.stack(scores, dim=0))
 
 
@@ -76,7 +83,7 @@ def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, te
     fig_train_score = list()
     fig_test_score = list()
 
-    highest_epoch = highest_score = loss_mean = 0
+    highest_epoch = highest_score = 0
 
     total_data = len(dataset)
     test_size = int(total_data * test_factor)
@@ -90,8 +97,8 @@ def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, te
     for ep in range(epochs):
         timer = time.clock()
         for param_group in optimizer.param_groups:
-            if ep != 0 and ep % 40 == 0:
-                param_group['lr'] *= 0.1
+            # if ep != 0 and (ep % 35 == 0):
+            #     param_group['lr'] *= 0.1
             learning_rate = param_group['lr']
         print(f"[ Epoch {ep + 1}/{epochs} ]")
         loss_mean = run_one_epoch(model, trainloader, device, criterion, optimizer)
@@ -122,13 +129,13 @@ Time passed: {time.clock() - timer} seconds.
 
 
 if __name__ == '__main__':
-    EPOCH = 200
-    BATCHSIZE = 8
+    EPOCH = 150
+    BATCHSIZE = 1
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = VertebraDataset("..\\extend_dataset", train=True)
-    model = ResUnet(in_channels=1, out_channels=1)
-    criterion = BCEWithLogitsLoss()
+    model = ResUnet(in_channels=1, out_channels=2)
+    criterion = CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=1e-3)
 
     train(model, dataset, device, EPOCH, criterion, optimizer, batch_size=BATCHSIZE)
