@@ -1,7 +1,6 @@
-from torch.nn.functional import interpolate
 from torch.nn import Module, Conv2d, ConvTranspose2d
 from torch import cat
-from .components import Residual_Unit, ResidualBlock
+from .components import Residual_Unit, ResidualBlock, padding
 
 
 class ResUnet(Module):
@@ -37,17 +36,17 @@ class ResUnet(Module):
         x = self.resbridge(x)
 
         x = self.up3(x)
-        x = interpolate(x[:, :, ], size=l3.shape[-2:])
+        x = padding(x, l3)
         x = cat([l3, x], dim=1)
         x = self.resblock3r(x)
 
         x = self.up2(x)
-        x = interpolate(x[:, :, ], size=l2.shape[-2:])
+        x = padding(x, l2)
         x = cat([l2, x], dim=1)
         x = self.resblock2r(x)
 
         x = self.up1(x)
-        x = interpolate(x[:, :, ], size=l1.shape[-2:])
+        x = padding(x, l1)
         x = cat([l1, x], dim=1)
         x = self.resblock1r(x)
 

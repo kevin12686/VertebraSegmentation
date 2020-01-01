@@ -1,4 +1,14 @@
-from torch.nn import Sequential, Conv2d, ConvTranspose2d, ReLU, BatchNorm2d, Module
+from torch.nn import Sequential, Conv2d, ConvTranspose2d, ReLU, BatchNorm2d, Module, functional
+
+
+# y > x
+def padding(x, y):
+    if x.shape == y.shape:
+        return x
+    else:
+        s2 = y.shape[2] - x.shape[2]
+        s3 = y.shape[3] - x.shape[3]
+        return functional.pad(x, (0, s3, 0, s2))
 
 
 def Double_Conv2d(in_channels, out_channels, padding=0):

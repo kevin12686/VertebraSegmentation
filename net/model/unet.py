@@ -1,7 +1,6 @@
-from torch.nn.functional import interpolate
 from torch.nn import Module, MaxPool2d, Conv2d
 import torch
-from .components import Double_Conv2d, DeConv2D
+from .components import Double_Conv2d, DeConv2D, padding
 
 
 class Unet(Module):
@@ -43,22 +42,22 @@ class Unet(Module):
         x = self.doubleb(x)
 
         x = self.up1(x)
-        x = interpolate(x[:, :, ], size=l4.shape[-2:])
+        x = padding(x, l4)
         x = torch.cat([l4, x], dim=1)
         x = self.double1r(x)
 
         x = self.up2(x)
-        x = interpolate(x[:, :, ], size=l3.shape[-2:])
+        x = padding(x, l3)
         x = torch.cat([l3, x], dim=1)
         x = self.double2r(x)
 
         x = self.up3(x)
-        x = interpolate(x[:, :, ], size=l2.shape[-2:])
+        x = padding(x, l2)
         x = torch.cat([l2, x], dim=1)
         x = self.double3r(x)
 
         x = self.up4(x)
-        x = interpolate(x[:, :, ], size=l1.shape[-2:])
+        x = padding(x, l1)
         x = torch.cat([l1, x], dim=1)
         x = self.double4r(x)
 
