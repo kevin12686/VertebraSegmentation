@@ -43,22 +43,22 @@ class Unet(Module):
         x = self.doubleb(x)
 
         x = self.up1(x)
-        x = interpolate(x[:, :, ], l4[-2:])
+        x = interpolate(x[:, :, ], size=l4.shape[-2:])
         x = torch.cat([l4, x], dim=1)
         x = self.double1r(x)
 
         x = self.up2(x)
-        x = interpolate(x[:, :, ], l3[-2:])
+        x = interpolate(x[:, :, ], size=l3.shape[-2:])
         x = torch.cat([l3, x], dim=1)
         x = self.double2r(x)
 
         x = self.up3(x)
-        x = interpolate(x[:, :, ], l2[-2:])
+        x = interpolate(x[:, :, ], size=l2.shape[-2:])
         x = torch.cat([l2, x], dim=1)
         x = self.double3r(x)
 
         x = self.up4(x)
-        x = interpolate(x[:, :, ], l1[-2:])
+        x = interpolate(x[:, :, ], size=l1.shape[-2:])
         x = torch.cat([l1, x], dim=1)
         x = self.double4r(x)
 
