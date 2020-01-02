@@ -1,6 +1,6 @@
 from torch.nn import Module, MaxPool2d, Conv2d
 import torch
-from .components import Double_Conv2d, DeConv2D, padding
+from .components import Double_Conv2d, DeConv2D, cropping
 
 
 class Unet(Module):
@@ -42,22 +42,22 @@ class Unet(Module):
         x = self.doubleb(x)
 
         x = self.up1(x)
-        x = padding(x, l4)
+        l4 = cropping(l4, x)
         x = torch.cat([l4, x], dim=1)
         x = self.double1r(x)
 
         x = self.up2(x)
-        x = padding(x, l3)
+        l3 = cropping(l3, x)
         x = torch.cat([l3, x], dim=1)
         x = self.double2r(x)
 
         x = self.up3(x)
-        x = padding(x, l2)
+        l2 = cropping(l2, x)
         x = torch.cat([l2, x], dim=1)
         x = self.double3r(x)
 
         x = self.up4(x)
-        x = padding(x, l1)
+        l1 = cropping(l1, x)
         x = torch.cat([l1, x], dim=1)
         x = self.double4r(x)
 

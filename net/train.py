@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 import torch
 from tqdm import tqdm
 from os import path
-from net.model import ResUnet
+from net.model import Unet
+from net.model.components import cropping
 from net.data import VertebraDataset
 import matplotlib.pyplot as plt
 import time
@@ -57,7 +58,7 @@ def eval(model, loader, device):
             mask = mask.to(device)
             output = model(img)
             output = torch.softmax(output, dim=1)
-            score = dice_coef(output[:, 1], mask)
+            score = dice_coef(output[:, 1], mask[:, :output.shape[2], :output.shape[3]])
             scores.append(score)
     return torch.mean(torch.stack(scores, dim=0))
 
@@ -70,7 +71,7 @@ def run_one_epoch(model, loader, device, criterion, optimizer):
         mask = mask.to(device)
         optimizer.zero_grad()
         output = model(img)
-        loss = criterion(output, mask)
+        loss = criterion(output, mask[:, :output.shape[2], :output.shape[3]])
         loss.backward()
         optimizer.step()
         total_loss += loss
@@ -124,12 +125,12 @@ Time passed: {round(time.clock() - timer)} seconds.
 
 if __name__ == '__main__':
     EPOCH = 120
-    BATCHSIZE = 8
+    BATCHSIZE = 4
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     traindataset = VertebraDataset("..\\extend_dataset", train=True)
     testdataset = VertebraDataset("..\\original_data\\f03", train=True)
-    model = ResUnet(in_channels=1, out_channels=2)
+    model = Unet(in_channels=1, out_channels=2)
     criterion = CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=1e-3)
 

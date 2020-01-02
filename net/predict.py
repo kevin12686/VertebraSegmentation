@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from skimage import io
 from net.data import VertebraDataset
-from net.model import ResUnet
+from net.model import Unet
 import torch
 import numpy as np
 
@@ -22,7 +22,7 @@ def predict(model, loader, save_path="..\\test\\predict"):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = VertebraDataset("..\\test\\image")
-    model = ResUnet(in_channels=1, out_channels=2)
+    model = Unet(in_channels=1, out_channels=2)
     checkpoint = torch.load("save\\best.pt")
     model.load_state_dict(checkpoint["state_dict"])
     loader = DataLoader(dataset, batch_size=1)
