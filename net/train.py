@@ -5,7 +5,6 @@ import torch
 from tqdm import tqdm
 from os import path
 from net.model import Unet
-from net.model.components import cropping
 from net.data import VertebraDataset
 import matplotlib.pyplot as plt
 import time
@@ -125,14 +124,14 @@ Time passed: {round(time.clock() - timer)} seconds.
 
 if __name__ == '__main__':
     EPOCH = 120
-    BATCHSIZE = 4
+    BATCHSIZE = 1
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     traindataset = VertebraDataset("..\\extend_dataset", train=True)
     testdataset = VertebraDataset("..\\original_data\\f03", train=True)
     model = Unet(in_channels=1, out_channels=2)
     criterion = CrossEntropyLoss()
-    optimizer = Adam(model.parameters(), lr=1e-3)
+    optimizer = Adam(model.parameters(), lr=1e-4)
 
     train(model, traindataset, testdataset, device, EPOCH, criterion, optimizer, batch_size=BATCHSIZE)
     print("Done.")

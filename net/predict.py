@@ -16,12 +16,12 @@ def predict(model, loader, save_path="..\\test\\predict"):
             output = (torch.softmax(output, dim=1)[:, 1]) * 255
             output = output.cpu().numpy().astype(np.uint8)
             for dim in range(output.shape[0]):
-                io.imsave(f"{save_path}\\predict_{filename[dim]}", output[dim])
+                io.imsave(f"{save_path}\\p{filename[dim]}", output[dim])
 
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = VertebraDataset("..\\test\\image")
+    dataset = VertebraDataset("..\\original_data\\f03")
     model = Unet(in_channels=1, out_channels=2)
     checkpoint = torch.load("save\\best.pt")
     model.load_state_dict(checkpoint["state_dict"])
