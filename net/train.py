@@ -77,7 +77,7 @@ def run_one_epoch(model, loader, device, criterion, optimizer):
     return total_loss / len(loader)
 
 
-def train(model, traindataset, testdataset, device, epochs, criterion, optimizer, batch_size=1, test_factor=0.1, save_dir=path.join("save")):
+def train(model, traindataset, testdataset, device, epochs, criterion, optimizer, batch_size=1, save_dir=path.join("save")):
     fig_epoch = list()
     fig_loss = list()
     fig_train_score = list()
