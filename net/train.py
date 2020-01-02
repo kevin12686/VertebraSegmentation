@@ -105,8 +105,8 @@ def train(model, traindataset, testdataset, device, epochs, criterion, optimizer
         fig_test_score.append(test_score)
         save_fig(fig_epoch, fig_loss, fig_train_score, fig_test_score, save_dir=save_dir)
 
-        if train_score > highest_score:
-            highest_score = train_score
+        if test_score > highest_score:
+            highest_score = test_score
             highest_epoch = ep + 1
             torch.save({"state_dict": model.state_dict(), "loss": loss_mean, "batchsize": batch_size, "Epoch": ep + 1}, path.join(save_dir, "best.pt"))
 
