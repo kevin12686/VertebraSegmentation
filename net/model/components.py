@@ -11,6 +11,14 @@ def padding(x, y):
         return functional.pad(x, (0, s3, 0, s2))
 
 
+# x > y
+def cropping(x, y):
+    if x.shape == y.shape:
+        return x
+    else:
+        return x[:, :, :y.shape[2], :y.shape[3]]
+
+
 def Double_Conv2d(in_channels, out_channels, padding=0):
     return Sequential(
         Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, padding=padding),
