@@ -13,7 +13,7 @@ def predict(model, loader, save_path="..\\test\\predict"):
         for _, (img, filename) in tqdm(enumerate(loader), total=len(loader), desc="Predict"):
             img = img.to(device)
             output = model(img)
-            output = (torch.softmax(output, dim=1)[:, 1] > 0.5) * 255
+            output = (torch.softmax(output, dim=1)[:, 1]) * 255
             output = output.cpu().numpy().astype(np.uint8)
             for dim in range(output.shape[0]):
                 io.imsave(f"{save_path}\\predict_{filename[dim]}", output[dim])
