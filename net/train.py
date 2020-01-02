@@ -29,7 +29,7 @@ def dice_coef(target, truth, smooth=1.0):
     return dice
 
 
-def save_fig(epoch, loss, trainscore, save_dir=path.join("save")):
+def save_fig(epoch, loss, trainscore, testscore, save_dir=path.join("save")):
     plt.plot(epoch, loss, label="Loss")
     plt.title("Loss")
     plt.xlabel("Epoch")
@@ -39,6 +39,7 @@ def save_fig(epoch, loss, trainscore, save_dir=path.join("save")):
     plt.clf()
 
     plt.plot(epoch, trainscore, label="Train")
+    plt.plot(epoch, testscore, label="Test")
     plt.title("Score")
     plt.xlabel("Epoch")
     plt.ylabel("Score")
@@ -76,14 +77,16 @@ def run_one_epoch(model, loader, device, criterion, optimizer):
     return total_loss / len(loader)
 
 
-def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, test_factor=0.1, save_dir=path.join("save")):
+def train(model, traindataset, testdataset, device, epochs, criterion, optimizer, batch_size=1, test_factor=0.1, save_dir=path.join("save")):
     fig_epoch = list()
     fig_loss = list()
     fig_train_score = list()
+    fig_test_score = list()
 
     highest_epoch = highest_score = 0
 
-    trainloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    trainloader = DataLoader(traindataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    testloader = DataLoader(testdataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
 
     model = model.to(device)
 
@@ -94,11 +97,13 @@ def train(model, dataset, device, epochs, criterion, optimizer, batch_size=1, te
         print(f"[ Epoch {ep + 1}/{epochs} ]")
         loss_mean = run_one_epoch(model, trainloader, device, criterion, optimizer)
         train_score = eval(model, trainloader, device)
+        test_score = eval(model, testloader, device)
 
         fig_epoch.append(ep + 1)
         fig_loss.append(loss_mean)
         fig_train_score.append(train_score)
-        save_fig(fig_epoch, fig_loss, fig_train_score, save_dir=save_dir)
+        fig_test_score.append(test_score)
+        save_fig(fig_epoch, fig_loss, fig_train_score, fig_test_score, save_dir=save_dir)
 
         if train_score > highest_score:
             highest_score = train_score
@@ -112,19 +117,21 @@ Best Score {highest_score} @ Epoch {highest_epoch}
 Learning Rate: {learning_rate}
 Loss: {loss_mean}
 Train Dice: {train_score}
-Time passed: {time.clock() - timer} seconds.
+Test Dice: {test_score}
+Time passed: {round(time.clock() - timer)} seconds.
 """)
 
 
 if __name__ == '__main__':
-    EPOCH = 200
+    EPOCH = 120
     BATCHSIZE = 8
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    dataset = VertebraDataset("..\\extend_dataset", train=True)
+    traindataset = VertebraDataset("..\\extend_dataset", train=True)
+    testdataset = VertebraDataset("..\\original_data\\f03", train=True)
     model = ResUnet(in_channels=1, out_channels=2)
     criterion = CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=1e-3)
 
-    train(model, dataset, device, EPOCH, criterion, optimizer, batch_size=BATCHSIZE)
+    train(model, traindataset, testdataset, device, EPOCH, criterion, optimizer, batch_size=BATCHSIZE)
     print("Done.")
