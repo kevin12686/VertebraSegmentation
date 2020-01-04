@@ -1,5 +1,7 @@
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_dilation, binary_erosion, square
+from skimage.filters import sobel
+from skimage.color import gray2rgb
 import numpy as np
 
 
@@ -118,6 +120,17 @@ def dice_coef_each_region(target, truth):
 
     # (truth_num, target_num, score)
     return scores, np.mean([i[2] for i in scores])
+
+
+def draw_edge(origin_img, predict_map):
+    img = gray2rgb(origin_img)
+    edge = sobel(predict_map)
+    row, col = np.where(edge > 0)
+    for i in range(len(row)):
+        img[row[i], col[i], 0] = 0
+        img[row[i], col[i], 1] = 0
+        img[row[i], col[i], 2] = 255
+    return img
 
 
 if __name__ == '__main__':

@@ -19,6 +19,24 @@ def predict(model, loader, save_path="..\\test\\predict"):
                 io.imsave(f"{save_path}\\p{filename[dim]}", output[dim])
 
 
+def predict_one(img, model_path):
+    img = VertebraDataset.preprocess(img)
+    format_img = np.zeros([1, 1, img.shape[0], img.shape[1]])
+    format_img[0, 0] = img
+    format_img = torch.tensor(format_img, dtype=torch.float)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = Unet(in_channels=1, out_channels=2)
+    model.load_state_dict(torch.load(model_path)["state_dict"])
+    model = model.to(device)
+    model.eval()
+    with torch.no_grad():
+        format_img = format_img.to(device)
+        output = model(format_img)
+        output = (torch.softmax(output, dim=1)[:, 1]) * 255
+        output = output.cpu().numpy().astype(np.uint8)
+    return output[0]
+
+
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dataset = VertebraDataset("..\\original_data\\f03")
