@@ -1,4 +1,4 @@
-name: segment
+name: segmentation_unet
 channels:
   - pytorch
   - conda-forge
@@ -64,5 +64,8 @@ dependencies:
   - xz=5.2.4=h2fa13f4_4
   - zlib=1.2.11=h62dcd97_3
   - zstd=1.3.7=h508b16e_0
-prefix: C:\Users\P76084596\.conda\envs\segment
+  - pip:
+    - pyqt5==5.14.0
+    - pyqt5-sip==12.7.0
+prefix: C:\Users\Kevin\Anaconda3\envs\segmentation_unet
 
